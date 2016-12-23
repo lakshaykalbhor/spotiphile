@@ -1,0 +1,44 @@
+import argparse
+import os
+import configparser
+from spotiphile import Spotiphile
+
+config = configparser.ConfigParser()
+config.read(os.path.expandvars("$XDG_CONFIG_HOME/spotiphile/.config"))
+try:
+    YOUTUBE_DEV_KEY = config['YOUTUBE']['DEV_KEY']
+except:
+    YOUTUBE_DEV_KEY = None
+
+parser = argparse.ArgumentParser(
+    description="Download music from Spotify"
+)
+
+parser.add_argument(
+    "URL", help="Spotify URL for track/album which user wants to download \
+    [Of the form: https://open.spotify.com/*]",
+    action="store"
+)
+
+parser.add_argument(
+    "-o", "--output", metavar="/path/to/file",
+    help="Specify the output file to create the audio file(s).\
+    Extensions are automatically dropped in favor of MP3",
+    action="store"
+)
+
+parser.add_argument(
+    "-y", "--youtube", metavar="YOUTUBE_URL",
+    help="Specify the link to YouTube instead of automatically searching.\
+    Works only when the specified URL \
+    points to a track"
+)
+
+args = parser.parse_args()
+
+s = Spotiphile(YOUTUBE_DEV_KEY)
+
+if args.output is None:
+    s.get(url=args.URL, yt_url=args.youtube)
+else:
+    s.get(url=args.URL, yt_url=args.youtube, out=args.output)
