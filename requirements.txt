@@ -2,3 +2,4 @@ requests
 youtube_dl
 google-api-python-client
 mutagen
+bs4

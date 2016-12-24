@@ -4,3 +4,6 @@ class InvalidURLError(Exception):
 
 class InvalidFormatError(Exception):
     pass
+
+class InvalidKeyError(Exception):
+	pass

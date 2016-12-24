@@ -1,7 +1,7 @@
 import mutagen
 import requests
 from mutagen.mp3 import MP3, HeaderNotFoundError
-from mutagen.id3 import TIT2, TALB, TPE1, APIC, TRCK, TCON, TDRC
+from mutagen.id3 import TIT2, TALB, TPE1, APIC, TRCK, TCON, TDRC, ID3, USLT
 
 
 class Tagger:
@@ -33,4 +33,11 @@ class Tagger:
                 data=requests.get(metadata['cover']).content
             )
         )
+        audio.save(filename)
+
+        ''' Using ID3 and USLT to add lyrics '''
+        
+        audio = ID3(filename)
+        uslt_output = USLT(encoding=3, lang=u'eng', desc=u'desc', text=metadata['lyrics'])
+        audio["USLT::'eng'"] = uslt_output
         audio.save(filename)

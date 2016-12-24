@@ -1,6 +1,7 @@
 import re
 import os
 import requests
+from bs4 import BeautifulSoup
 from .youtube import YouTubeHandler
 from .tagger import Tagger
 from .exception import InvalidURLError, InvalidFormatError
@@ -9,9 +10,10 @@ import json
 
 class Spotiphile:
 
-    def __init__(self, YOUTUBE_DEV_KEY=None):
+    def __init__(self, YOUTUBE_DEV_KEY=None, GENIUS_DEV_KEY=None):
 
         self.YOUTUBE_DEV_KEY = YOUTUBE_DEV_KEY
+        self.GENIUS_DEV_KEY = GENIUS_DEV_KEY
 
     def get(
         self, url=None, yt_url=None,
@@ -102,5 +104,39 @@ to YouTube API with search enabled"
             'title': title, 'primary_artist': primary_artist,
             'artists': artists, 'album': album, 'track_no': track_no,
             'cover': cover, 'year': year, 'genre': genre, 'out_file': out,
-            'explicit': explicit
+            'explicit': explicit,
+            'lyrics' : self._generate_lyrics(title)
         }
+
+    def _generate_lyrics(self, title):
+        '''
+        Finds song lyrics from genius.com
+        '''
+
+        if self.GENIUS_DEV_KEY is None:
+            return ' '
+
+        headers = {'Authorization': 'Bearer %s' %(self.GENIUS_DEV_KEY)}
+        base_url = "http://api.genius.com"
+        search_url = base_url + "/search"
+        data = {'q': title}
+        response = requests.get(search_url, data=data, headers=headers)
+        json = response.json()
+        
+        try:
+            song_api_path = json["response"]["hits"][0]["result"]["api_path"]
+            song_url = base_url + song_api_path
+            response = requests.get(song_url, headers=headers)
+            json = response.json()
+            path = json["response"]["song"]["path"]
+            page_url = "http://genius.com" + path
+            page = requests.get(page_url)
+            soup = BeautifulSoup(page.text, "html.parser")
+            div = soup.find('div',{'class': 'song_body-lyrics'})
+            lyrics = div.find('p').getText()
+
+        except KeyError:
+            raise InvalidFormatError("Enter only valid keys in {}")
+      
+        return lyrics
+
